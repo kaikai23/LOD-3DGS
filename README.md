@@ -6,3 +6,9 @@
 ![Teaser image](assets/teaser.jpg)
 
 ### Fork of LetsGo. My development is base on the depth branch. Please switch to the depth branch.
+
+## To-Do List
+
+- [ ] parallel data reading
+- [ ] depth image generation
+- [ ] add maskgaussian
