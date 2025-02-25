@@ -9,6 +9,6 @@
 
 ## To-Do List
 
-- [ ] parallel data reading
+- [x] parallel data reading
 - [ ] depth image generation
 - [ ] add maskgaussian
