@@ -119,7 +119,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             # Progress bar
             ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
             if iteration % 10 == 0:
-                progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}"})
+                progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}", "N": f"{xyz.shape[0]}", "N_all": f"{sum(scene.gaussians[i].get_xyz.shape[0] for i in range(len(scene.gaussians)))}"})
                 progress_bar.update(10)
             if iteration == opt.iterations:
                 progress_bar.close()
@@ -180,6 +180,9 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
         tb_writer.add_scalar('iter_time', elapsed, iteration)
         tb_writer.add_scalar('memory/memory_allocated', torch.cuda.memory_allocated('cuda') / (1024 ** 3), iteration)
         tb_writer.add_scalar('memory/memory_reserved', torch.cuda.memory_reserved('cuda') / (1024 ** 3), iteration)
+        tb_writer.add_scalar('total_points', sum(scene.gaussians[i].get_xyz.shape[0] for i in range(len(scene.gaussians))), iteration)
+        for i in range(len(scene.gaussians)):
+            tb_writer.add_scalar(f'level_{i}_points', scene.gaussians[i].get_xyz.shape[0], iteration)
 
     # Report test and samples of training set
     if iteration in testing_iterations:
@@ -238,8 +241,8 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=6009)
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
-    parser.add_argument("--test_iterations", nargs="+", type=int, default=[50, 100, 500, 1_000, 5_000, 10_000, 20_000, 30_000])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[1_000, 10_000, 20_000, 30_000])
+    parser.add_argument("--test_iterations", nargs="+", type=int, default=[5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70000, 75000, 80000, 85000, 90000, 95000, 100000, 105000, 110000, 115000, 120000, 125000, 130000, 135000, 140000, 145000, 150000, 155000, 160000, 165000, 170000, 175000, 180000, 185000, 190000, 195000, 200000, 205000, 210000, 215000, 220000, 225000, 230000, 235000, 240000, 245000, 250000, 255000, 260000, 265000, 270000, 275000, 280000, 285000, 290000, 295000, 300000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[50000, 100000, 200000, 300000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--start_checkpoint", type=str, default = None)

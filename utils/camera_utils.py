@@ -13,6 +13,9 @@ from scene.cameras import Camera
 import numpy as np
 from utils.general_utils import PILtoTorch
 from utils.graphics_utils import fov2focal
+from multiprocessing.pool import ThreadPool
+from tqdm import tqdm
+import torch
 
 WARNED = False
 
@@ -65,8 +68,17 @@ def loadCam(args, id, cam_info, resolution_scale):
 def cameraList_from_camInfos(cam_infos, resolution_scale, args):
     camera_list = []
 
-    for id, c in enumerate(cam_infos):
-        camera_list.append(loadCam(args, id, c, resolution_scale))
+    torch.inverse(torch.ones((1, 1), device="cuda:0"))  # lazy loading torch.linalg
+    tbar = tqdm(range(len(cam_infos)))
+    def process_cam(id_caminfo):
+        tbar.update(1)
+        id = id_caminfo[0]
+        c = id_caminfo[1]
+        return loadCam(args, id, c, resolution_scale)
+    # for id, c in enumerate(cam_infos):
+    #     camera_list.append(loadCam(args, id, c, resolution_scale))
+    with ThreadPool() as pool:
+        camera_list = pool.map(process_cam, zip(range(len(cam_infos)), cam_infos))
 
     return camera_list
 

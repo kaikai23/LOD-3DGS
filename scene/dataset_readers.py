@@ -28,6 +28,7 @@ from utils.system_utils import mkdir_p
 from scene.gaussian_model import BasicPointCloud
 from scene.octree_loader import loadOctree
 import queue
+from multiprocessing.pool import ThreadPool
 
 class CameraInfo(NamedTuple):
     uid: int
@@ -80,12 +81,14 @@ def getNerfppNorm(cam_info):
 
 def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, depths_folder = None):
     cam_infos = []
-    for idx, key in enumerate(cam_extrinsics):
-        sys.stdout.write('\r')
-        # the exact output you're looking for:
-        sys.stdout.write("[ Scene ] Reading camera {}/{}".format(idx+1, len(cam_extrinsics)))
-        sys.stdout.flush()
+    tbar = tqdm(range(len(cam_extrinsics)))
+    sys.stdout.write('\r')
+    sys.stdout.write("[ Scene ] Reading {} cameras".format(len(cam_extrinsics)))
+    sys.stdout.flush()
 
+    # for idx, key in enumerate(cam_extrinsics):
+    def process_frame(key):
+        tbar.update(1)
         extr = cam_extrinsics[key]
         intr = cam_intrinsics[extr.camera_id]
         height = intr.height
@@ -121,9 +124,12 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, depths_fold
             depth_path = None
             depth_copy = None
 
-        cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+        return CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                               image_path=image_path, image_name=image_name, depth_path=depth_path, depth = depth_copy, width=width, height=height, cx = cx, cy = cy)
-        cam_infos.append(cam_info)
+    with ThreadPool() as pool:
+        cam_infos = pool.map(process_frame, cam_extrinsics)
+        pool.close()
+        pool.join()
     sys.stdout.write('\n')
     return cam_infos
 
